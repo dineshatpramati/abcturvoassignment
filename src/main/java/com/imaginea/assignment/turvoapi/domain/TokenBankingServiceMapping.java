@@ -40,6 +40,7 @@ public class TokenBankingServiceMapping {
     public TokenBankingServiceMapping() {
     }
 
+    @JsonIgnore
     private String comments;
 
     public TokenServiceStatus getServiceStatus() {

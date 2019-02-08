@@ -30,8 +30,7 @@ public class BankingServiceCounterMapping {
     private Counter counter;
 
 
-    @NotNull
-    private int  counter_order;
+
 
     public Long getId() {
         return id;
@@ -57,12 +56,6 @@ public class BankingServiceCounterMapping {
         this.counter = counter;
     }
 
-    public int getCounter_order() {
-        return counter_order;
-    }
 
-    public void setCounter_order(int counter_order) {
-        this.counter_order = counter_order;
-    }
 }
 

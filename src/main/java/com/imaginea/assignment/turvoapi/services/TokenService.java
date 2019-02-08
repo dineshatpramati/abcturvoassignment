@@ -15,7 +15,7 @@ public interface TokenService {
 
      void completeToken(long tokenId);
 
-     TokenResponse getNextQueuedTokenByCounter(String queueName);
+     TokenResponse processNextQueuedToken(String branchCode,String counterNumber);
 
 
 

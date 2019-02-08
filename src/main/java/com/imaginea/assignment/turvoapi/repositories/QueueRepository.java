@@ -15,5 +15,7 @@ public interface QueueRepository {
 
     List<TokenMessage> getAllQueueItems(String queueName);
 
+    void remove(String queueName,long index,TokenMessage message);
+
 
 }

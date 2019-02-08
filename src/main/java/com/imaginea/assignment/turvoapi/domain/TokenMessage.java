@@ -8,13 +8,45 @@ public class TokenMessage  implements Serializable {
 
     private Long id ;
 
-    private int tokenNumber;
+    private int number;
 
     private List<TokenBankingServiceMapping> tokenServices;
 
-
+    private CustomerPriority priority;
 
     private int currentCounterNumber;
+
+    private long currentServiceId;
+
+    public long getCurrentServiceId() {
+        return currentServiceId;
+    }
+
+    public void setCurrentServiceId(long currentServiceId) {
+        this.currentServiceId = currentServiceId;
+    }
+
+    private long nextServiceId =-1;
+
+    private Customer customer;
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
+
+    public CustomerPriority getPriority() {
+        return priority;
+    }
+
+    public void setPriority(CustomerPriority priority) {
+        this.priority = priority;
+    }
+
+
 
 
     public Long getId() {
@@ -25,12 +57,12 @@ public class TokenMessage  implements Serializable {
         this.id = id;
     }
 
-    public int getTokenNumber() {
-        return tokenNumber;
+    public int getNumber() {
+        return number;
     }
 
-    public void setTokenNumber(int tokenNumber) {
-        this.tokenNumber = tokenNumber;
+    public void setNumber(int number) {
+        this.number = number;
     }
 
     public List<TokenBankingServiceMapping> getTokenServices() {
@@ -39,7 +71,7 @@ public class TokenMessage  implements Serializable {
 
     public TokenMessage(Long id, int tokenNumber) {
         this.id = id;
-        this.tokenNumber = tokenNumber;
+        this.number = tokenNumber;
         this.tokenServices = new ArrayList<TokenBankingServiceMapping>();
     }
 
@@ -48,6 +80,11 @@ public class TokenMessage  implements Serializable {
 
     public void setTokenServices(List<TokenBankingServiceMapping> tokenServices) {
         this.tokenServices = tokenServices;
+    }
+
+
+    public void removeTokenServices(){
+        this.tokenServices.remove(0);
     }
 
     public void addTokenService(TokenBankingServiceMapping service){
@@ -59,6 +96,14 @@ public class TokenMessage  implements Serializable {
 
     public void setCurrentCounterNumber(int currentCounterNumber) {
         this.currentCounterNumber = currentCounterNumber;
+    }
+
+    public long getNextServiceId() {
+        return nextServiceId;
+    }
+
+    public void setNextServiceId(long nextServiceId) {
+        this.nextServiceId = nextServiceId;
     }
 
 

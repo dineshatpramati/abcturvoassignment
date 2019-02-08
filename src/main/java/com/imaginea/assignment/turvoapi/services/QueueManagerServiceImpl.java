@@ -62,7 +62,7 @@ public class QueueManagerServiceImpl implements QueueManagerService {
             ct.setCounterNumber(counter.getNumber());
             ct.setQueuedTokens(queueRepository.getAllQueueItems(branchCode+counter.getNumber())
                     .stream()
-                    .collect(Collectors.mapping(TokenMessage::getTokenNumber,Collectors.toList())));
+                    .collect(Collectors.mapping(TokenMessage::getNumber,Collectors.toList())));
 
             ct.setCounterPriority(counter.getPriority());
 

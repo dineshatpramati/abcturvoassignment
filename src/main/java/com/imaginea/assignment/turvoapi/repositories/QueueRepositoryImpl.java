@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Repository
-@Transactional
 public class QueueRepositoryImpl implements QueueRepository {
 
     @Autowired
@@ -20,7 +19,10 @@ public class QueueRepositoryImpl implements QueueRepository {
 
     @Override
     public TokenMessage dequeue(String queueName) {
-        return redisTemplate.opsForList().rightPop(queueName);
+       // TokenMessage message = redisTemplate.opsForList().index(queueName,0);
+
+        TokenMessage message = redisTemplate.opsForList().rightPop(queueName);
+        return message;
     }
 
     @Override
@@ -38,5 +40,10 @@ public class QueueRepositoryImpl implements QueueRepository {
     @Override
     public List<TokenMessage> getAllQueueItems(String queueName) {
         return redisTemplate.opsForList().range(queueName,0,-1);
+    }
+
+    @Override
+    public void remove(String queueName, long index,TokenMessage message) {
+        redisTemplate.opsForList().remove(queueName,1,message);
     }
 }

@@ -12,6 +12,9 @@ public class TokenResponse  {
     private int currentCounterNumber;
 
 
+
+
+
     public int getTokenNumber() {
         return tokenNumber;
     }
@@ -35,4 +38,8 @@ public class TokenResponse  {
     public void setCurrentCounterNumber(int currentCounterNumber) {
         this.currentCounterNumber = currentCounterNumber;
     }
+
+
+
+
 }

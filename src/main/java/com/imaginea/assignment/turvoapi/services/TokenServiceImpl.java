@@ -4,10 +4,7 @@ import com.imaginea.assignment.turvoapi.business.SequenceGenerator;
 import com.imaginea.assignment.turvoapi.business.CounterAssigner;
 import com.imaginea.assignment.turvoapi.crosscutting.TurvoAPIException;
 import com.imaginea.assignment.turvoapi.domain.*;
-import com.imaginea.assignment.turvoapi.repositories.CustomerRepository;
-import com.imaginea.assignment.turvoapi.repositories.BankingServiceRepository;
-import com.imaginea.assignment.turvoapi.repositories.QueueRepository;
-import com.imaginea.assignment.turvoapi.repositories.TokenRepository;
+import com.imaginea.assignment.turvoapi.repositories.*;
 import com.imaginea.assignment.turvoapi.viewresponse.TokenRequest;
 import com.imaginea.assignment.turvoapi.viewresponse.TokenResponse;
 import org.modelmapper.ModelMapper;
@@ -15,8 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TokenServiceImpl implements TokenService {
@@ -29,6 +28,9 @@ public class TokenServiceImpl implements TokenService {
 
     @Autowired
     private BankingServiceRepository bankingServiceRepository;
+
+    @Autowired
+    private BranchRepository branchRepository;
 
     @Autowired
     private CounterAssigner counterAssigner;
@@ -85,7 +87,19 @@ public class TokenServiceImpl implements TokenService {
             if (service == null) {
                 throw new TurvoAPIException(TurvoAPIException.ErrorCode.SERVICE_NOT_FOUND);
             }
-            tokenServices.add(new TokenBankingServiceMapping(token, service));
+            if(service.isMultiCounter())
+            {
+                List<BankingService> childServices = bankingServiceRepository.findByParentService(service);
+                childServices.sort(Comparator.comparingInt(BankingService::getCounter_order));
+                for(BankingService child:childServices)
+                {
+                    tokenServices.add(new TokenBankingServiceMapping(token,child));
+                }
+            }
+            else
+            {
+                tokenServices.add(new TokenBankingServiceMapping(token, service));
+            }
 
         }
 
@@ -94,6 +108,7 @@ public class TokenServiceImpl implements TokenService {
         token.setStatusCode(TokenStatus.CREATED);
         token.setCustomer(customer);
         token.setPriority(tokenRequest.getPriority());
+
         Counter counter = counterAssigner.assignCounter(tokenServices.get(0).getService(),token);
 
         token.setCounter(counter);
@@ -102,6 +117,7 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
+    @Transactional
     public TokenResponse findByTokenId(long tokenId)  throws TurvoAPIException{
 
         try{
@@ -173,6 +189,7 @@ public class TokenServiceImpl implements TokenService {
         try
         {
             Token token = checkTokenValidity(tokenId);
+
             token.setStatusCode(TokenStatus.COMPLETED);
         }
         catch (TurvoAPIException ex)
@@ -187,12 +204,65 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public TokenResponse getNextQueuedTokenByCounter(String queueName) {
+    @Transactional
+    public TokenResponse processNextQueuedToken(String branchCode,String counterNumber) {
 
-        return convertMessagetoDto(queueRepository.dequeue(queueName));
+        String queueName = branchCode+counterNumber;
+
+       TokenMessage tokenToBeProcessed = queueRepository.dequeue(queueName);
+
+       if(tokenToBeProcessed!=null)
+       {
+           Token token = checkTokenValidity(tokenToBeProcessed.getId());
+
+           TokenBankingServiceMapping mapping =  token.getTokenServices()
+                   .stream()
+                   .filter(tsm->tsm.getService().getId().equals(tokenToBeProcessed.getCurrentServiceId())).findFirst().get();
+           mapping.setServiceStatus(TokenServiceStatus.COMPLETE);
+
+           tokenToBeProcessed.removeTokenServices();
+
+           if(tokenToBeProcessed.getNextServiceId()!=-1){
+
+               BankingService nextService = tokenToBeProcessed.getTokenServices().get(0).getService();
+
+               token.setStatusCode(TokenStatus.PARTIALCOMPLETE);
+
+
+               token.getCustomer().setBranch(branchRepository.findByBranchCode(branchCode));
+
+               Counter nextCounter = counterAssigner.assignCounter(nextService,token);
+               token.setCounter(nextCounter);
+               queueName = nextCounter.getBranch().getBranch_code()+nextCounter.getNumber();
+               tokenToBeProcessed.setCurrentCounterNumber(nextCounter.getNumber());
+               tokenToBeProcessed.setCurrentServiceId(nextService.getId());
+               if(tokenToBeProcessed.getTokenServices().size()>1){
+
+                   tokenToBeProcessed.setNextServiceId(token.getTokenServices().get(1).getService().getId());
+               }
+               else
+               {
+                   tokenToBeProcessed.setNextServiceId(-1);
+               }
+
+               queueRepository.enqueue(queueName,tokenToBeProcessed);
+           }
+           else
+           {
+               token.setStatusCode(TokenStatus.COMPLETED);
+               tokenToBeProcessed.setCurrentCounterNumber(0);
+           }
+
+
+           return convertMessagetoDto(tokenToBeProcessed);
+       }
+
+       else
+       {
+            return new TokenResponse();
+       }
 
     }
-
 
     private Token checkTokenValidity(Long tokenId)  throws TurvoAPIException{
 
@@ -201,7 +271,7 @@ public class TokenServiceImpl implements TokenService {
             Token token = tokenRepository.findById(tokenId).orElse(null);
             if (token == null) {
                 throw new TurvoAPIException(TurvoAPIException.ErrorCode.INVALID_TOKEN);
-            } else if (!TokenStatus.CREATED.equals(token.getStatusCode())) {
+            } else if (!(TokenStatus.CREATED.equals(token.getStatusCode()) || TokenStatus.PARTIALCOMPLETE.equals(token.getStatusCode()))) {
                 throw new TurvoAPIException(TurvoAPIException.ErrorCode.INVALID_TOKEN_STATE);
             }
             return token;
@@ -245,12 +315,25 @@ public class TokenServiceImpl implements TokenService {
 
     }
 
+    private Token convertMessageToEntity(TokenMessage tokenMessage){
+
+        Token token = modelMapper.map(tokenMessage,Token.class);
+        return token;
+    }
+
+
     private TokenMessage convertToMessage(Token token){
 
-        TokenMessage tokenMessage = new TokenMessage(token.getId(),token.getNumber());
+        TokenMessage tokenMessage = modelMapper.map(token,TokenMessage.class);
 
         tokenMessage.setTokenServices(token.getTokenServices());
         tokenMessage.setCurrentCounterNumber(token.getCounter().getNumber());
+        tokenMessage.setCurrentServiceId(token.getTokenServices().get(0).getService().getId());
+        if(tokenMessage.getTokenServices().size()>1) {
+            tokenMessage.setNextServiceId(tokenMessage.getTokenServices().get(1).getService().getId());
+        }
+
+
         return tokenMessage;
     }
 

@@ -37,7 +37,7 @@ public class RedisConfig {
     public RedisTemplate<String, TokenMessage> redisTemplate() {
         RedisTemplate<String, TokenMessage> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory());
-        redisTemplate.setEnableTransactionSupport(true);
+        redisTemplate.setEnableTransactionSupport(false);
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(TokenMessage.class));
 

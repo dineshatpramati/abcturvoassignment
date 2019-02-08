@@ -5,6 +5,7 @@ import com.imaginea.assignment.turvoapi.services.TokenService;
 import com.imaginea.assignment.turvoapi.viewresponse.ApiResponse;
 import com.imaginea.assignment.turvoapi.viewresponse.TokenRequest;
 import com.imaginea.assignment.turvoapi.viewresponse.TokenResponse;
+import com.imaginea.assignment.turvoapi.viewresponse.TokenUpdateRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,11 +38,11 @@ public class TokenController {
 
     @PutMapping(value = "/{tokenId}/{serviceId}/comment")
     @PreAuthorize("hasAnyRole('ROLE_OPERATOR','ROLE_MANAGER','ROLE_ADMIN')")
-    public ResponseEntity<ApiResponse<String>> addTokenComment(@PathVariable("tokenId") @NotNull Long tokenId, @PathVariable("serviceId") @NotNull Long serviceId, @RequestBody String comments) {
+    public ResponseEntity<ApiResponse<String>> addTokenComment(@PathVariable("tokenId") @NotNull Long tokenId, @PathVariable("serviceId") @NotNull Long serviceId, @RequestBody TokenUpdateRequest updateRequest) {
 
         ApiResponse<String> apiResponse = new ApiResponse<String>();
 
-        tokenService.addTokenComment(tokenId, serviceId, comments);
+        tokenService.addTokenComment(tokenId, serviceId, updateRequest.getComments());
         apiResponse.setResponseBody("Comment added successfully");
         return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
 
@@ -88,10 +89,10 @@ public class TokenController {
     }
 
     @GetMapping(value = "/next/{branchCode}/{counterNumber}")
-    public ResponseEntity<ApiResponse<TokenResponse>> processNextQueuedToken(@PathVariable("branchCode") @NotNull String branchCode,@PathVariable("counterNumber") @NotNull Integer counterNumber) {
+    public ResponseEntity<ApiResponse<TokenResponse>> processNextQueuedToken(@PathVariable("branchCode") @NotNull String branchCode,@PathVariable("counterNumber") @NotNull String counterNumber) {
 
         ApiResponse<TokenResponse> apiResponse = new ApiResponse<TokenResponse>();
-        TokenResponse tokenToBeProcessed = tokenService.getNextQueuedTokenByCounter(branchCode+counterNumber);
+        TokenResponse tokenToBeProcessed = tokenService.processNextQueuedToken(branchCode,counterNumber);
         apiResponse.setResponseBody(tokenToBeProcessed);
         return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
 

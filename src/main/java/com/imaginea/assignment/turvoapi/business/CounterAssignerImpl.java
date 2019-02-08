@@ -44,6 +44,7 @@ public class CounterAssignerImpl implements CounterAssigner {
     @Override
     public Counter assignCounter(BankingService service, Token token) {
 
+
         List<Counter> counters = getServiceCountersBasedOnCustomerPriority(service, token.getPriority())
                                                                                                         .stream()
                                                                                                         .filter(c -> c.getBranch().getId().equals(token.getCustomer().getBranch().getId()))

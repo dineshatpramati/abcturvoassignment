@@ -43,13 +43,109 @@ public class TokenServiceTest {
         mockToken.setTokenServices(mockTokenServices);
        when(tokenRepository.findTopByCounterNumberOrderByIdDesc(2)).thenReturn(mockToken);
 
+       TokenResponse actual = tokenService.processNextQueuedToken("ABC_HYD_002","2");
 
-       TokenResponse actual = tokenService.getNextQueuedTokenByCounter("ABC_HYD_0012");
+    }
+
+    @Test
+    public void testCreateNewToken(){
+
+    }
+
+    @Test
+    public void testCreateNewTokenNonExistingCustomer(){
+
+    }
+
+    @Test
+    public void testCreateNewTokenNonExistingServices(){
+
+    }
+
+    @Test
+    public void testcompleteToken(){
+
+    }
 
 
-
+    @Test
+    public void testcompleteTokenforNonExistingToken(){
 
 
     }
+
+    @Test
+    public void testcompleteTokenforMultiCounterServiceToken(){
+
+    }
+
+    @Test
+    public void testcompleteTokenforMultipleServiceSelectedToken(){
+
+
+    }
+
+
+    @Test
+    public void testcompleteTokenforAlreadyCompletedToken(){
+
+    }
+
+    @Test
+    public void testcompleteTokenforCancelledToken(){
+
+
+    }
+
+
+    @Test
+    public void testcancelToken(){
+
+    }
+
+
+    @Test
+    public void testcancelTokenforNonExistingToken(){
+
+
+    }
+
+    @Test
+    public void testcancelTokenforMultiCounterServiceToken(){
+
+    }
+
+    @Test
+    public void testcancelTokenforMultipleServiceSelectedToken(){
+
+
+    }
+
+
+    @Test
+    public void testcancelTokenforAlreadyCompletedToken(){
+
+    }
+
+    @Test
+    public void testcancelTokenforCancelledToken(){
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 }
